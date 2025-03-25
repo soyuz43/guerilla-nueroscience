@@ -1,43 +1,44 @@
 // src/components/auth/Login.jsx
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { getUserByEmail } from "../../services/userService"
-import "../../assets/styles/main.css"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { getUserByEmail } from "../../services/userService";
+import "../../assets/styles/main.css";
 
 export const Login = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     getUserByEmail(email).then((foundUsers) => {
       if (foundUsers.length === 1) {
-        const user = foundUsers[0]
+        const user = foundUsers[0];
         if (user.password === password) {
+          // Store both id and fullName in localStorage
           localStorage.setItem(
             "guerilla_user",
-            JSON.stringify({ id: user.id })
-          )
+            JSON.stringify({ id: user.id, fullName: user.fullName })
+          );
           // Trigger auth state update
-          window.dispatchEvent(new Event('storage'))
-          navigate("/")
+          window.dispatchEvent(new Event("storage"));
+          navigate("/");
         } else {
-          alert("Invalid password")
+          alert("Invalid password");
         }
       } else {
-        alert("Invalid login")
+        alert("Invalid login");
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="container">
       <div className="auth-container">
         <h1 className="auth-title">Guerrilla Neuroscience</h1>
         <h2 className="auth-subtitle">Sign In</h2>
-        
+
         <form onSubmit={handleLogin}>
           <div className="form-group">
             <label>Email</label>
@@ -73,5 +74,5 @@ export const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
