@@ -1,12 +1,118 @@
-# React + Vite
+# Guerrilla Neuroscience
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Currently, two official plugins are available:
+A living archive for AI inference-time research, breaking free from institutional constraints and academic gatekeeping.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- 🔐 **JWT-based Authentication** (simulated via localStorage)
+- 📚 **Research Article Management**
+  - Create, browse, and search articles
+  - Tag-based organization system
+- 💬 **Community Collaboration**
+  - Commenting system (stretch goal)
+  - User voting (stretch goal)
+- 🔍 **Advanced Search**
+  - Full-text search across titles and content
+  - Tag filtering
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+**Frontend:**
+- React 18
+- React Router 6
+- Vite (Build Tool)
+- CSS Modules
+
+**Backend Simulation:**
+- JSON Server (REST API mock)
+- LocalStorage (Auth simulation)
+
+## Project Structure
+
+```
+guerilla-neuroscience/
+├── src/
+│   ├── assets/
+│   │   └── styles/          # Global styles
+│   ├── components/
+│   │   ├── auth/            # Auth components
+│   │   ├── NavBar.jsx       # Navigation
+│   │   └── ProtectedRoute.jsx # Auth HOC
+│   ├── services/            # API services
+│   ├── views/               # Page components
+│   ├── App.jsx              # Main router
+│   └── main.jsx             # App entry
+├── db.json                  # JSON Server database
+└── public/                  # Static assets
+```
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/guerilla-neuroscience.git
+   cd guerilla-neuroscience
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development servers:
+   ```bash
+   # Terminal 1: Start Vite dev server
+   npm run dev
+   
+   # Terminal 2: Start JSON Server
+   json-server -w db.json -p 8088
+   ```
+
+## Available Scripts
+
+- `npm run dev`: Start Vite development server
+- `npm run build`: Create production build
+- `npm run serve`: Preview production build
+- `npm run test`: Run tests (to be implemented)
+
+## Authentication Flow
+
+```mermaid
+sequenceDiagram
+    User->>+Login: Submit credentials
+    Login->>+userService: Verify credentials
+    userService-->>-Login: User data
+    Login->>+LocalStorage: Store token
+    LocalStorage-->>-App: Auth state update
+    App->>+ProtectedRoute: Grant access
+```
+
+## Environment Setup
+
+Create `.env` file:
+
+```ini
+VITE_API_BASE=http://localhost:8088
+VITE_APP_NAME=Guerrilla Neuroscience
+```
+
+## Stretch Goals
+
+- [ ] OpenAI API integration
+- [ ] Real-time collaboration
+- [ ] PDF upload/parsing
+- [ ] Citation management
+
+## Contributing
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
