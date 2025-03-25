@@ -1,0 +1,23 @@
+// src/services/articleService.js
+const API_URL = 'http://localhost:8088/articles'
+
+export const getArticles = () => {
+  return fetch(API_URL).then(res => res.json())
+}
+
+export const createArticle = (article) => {
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(article)
+  })
+}
+
+
+export const getArticleById = (id) => {
+  return fetch(`${API_URL}/${id}`)
+    .then(res => res.json())
+}
+
