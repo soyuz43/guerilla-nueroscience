@@ -7,6 +7,7 @@ import { ArticleForm } from './ArticleForm'
 import { Login } from './components/auth/Login'
 import { Register } from './components/auth/Register'
 import { ArticleDetail } from './ArticleDetail' // Add this import
+import { EditArticle } from './EditArticle'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/articles" element={<ArticleList />} />
         {/* Add dynamic route */}
         <Route path="/articles/:id" element={<ArticleDetail />} />
+        <Route path="/articles/:id/edit" element={<EditArticle />} />
         <Route path="/submit" element={<ArticleForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

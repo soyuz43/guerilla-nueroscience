@@ -30,3 +30,14 @@ export const deleteArticle = (id) => {
     return res.json();
   });
 };
+
+
+export const updateArticle = (id, article) => {
+  return fetch(`${API_URL}/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(article)
+  })
+}
