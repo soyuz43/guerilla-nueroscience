@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Navigate, Link } from 'react-router-dom'
 import { getArticleById, deleteArticle } from './services/articleService'
+import { deleteArticleTagsByArticleId } from './services/tagService'
 import './assets/styles/main.css'
 
 export const ArticleDetail = () => {
@@ -28,6 +29,10 @@ export const ArticleDetail = () => {
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this article?')) {
       deleteArticle(id)
+        .then(() => {
+          // Delete associated articleTags
+          return deleteArticleTagsByArticleId(id)
+        })
         .then(() => navigate('/articles'))
         .catch(error => console.error('Error deleting article:', error))
     }
@@ -46,8 +51,8 @@ export const ArticleDetail = () => {
             By {article.author || 'Anonymous'} • {new Date(article.date).toLocaleDateString()}
           </p>
           <div className="tags">
-            {article.tags?.map(tag => (
-              <span key={tag} className="tag">{tag}</span>
+            {article.tags?.map((tag, index) => (
+              <span key={`${tag}-${index}`} className="tag">{tag}</span>
             ))}
           </div>
           <div className="content">
@@ -56,16 +61,10 @@ export const ArticleDetail = () => {
           
           {parsedUser && article.userId === parsedUser.id && (
             <div className="article-actions">
-              <Link
-                to={`/articles/${id}/edit`}
-                className="edit-button"
-              >
+              <Link to={`/articles/${id}/edit`} className="edit-button">
                 Edit
               </Link>
-              <button
-                className="delete-button"
-                onClick={handleDelete}
-              >
+              <button className="delete-button" onClick={handleDelete}>
                 Delete
               </button>
             </div>

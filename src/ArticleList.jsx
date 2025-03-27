@@ -1,8 +1,8 @@
 // src/views/ArticleList.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { getArticles, deleteArticle } from './services/articleService'
-import { getTagsForArticle, getAllTags } from './services/tagService'
+import { getTagsForArticle, getAllTags, deleteArticleTagsByArticleId } from './services/tagService'
 import './assets/styles/main.css'
 
 export const ArticleList = () => {
@@ -12,61 +12,77 @@ export const ArticleList = () => {
   const [allTags, setAllTags] = useState([])
   const [selectedTag, setSelectedTag] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem('guerilla_user'))
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true)
-      try {
-        // Load all necessary data in parallel
-        const [articlesData, tagsData] = await Promise.all([
-          getArticles(),
-          getAllTags()
-        ])
+  // Function to load articles and associated tags
+  const loadData = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
 
-        setArticles(articlesData)
-        setAllTags(tagsData)
+    try {
+      const [articlesResponse, tagsResponse] = await Promise.all([
+        getArticles().catch(() => []),
+        getAllTags().catch(() => [])
+      ])
 
-        // Load tags for each article
-        const tagsMap = {}
-        for (const article of articlesData) {
+      const articlesData = Array.isArray(articlesResponse) ? articlesResponse : []
+      const tagsData = Array.isArray(tagsResponse) ? tagsResponse : []
+
+      setArticles(articlesData)
+      setAllTags(tagsData)
+
+      // Build a mapping of article IDs to their tags
+      const tagsMap = {}
+      for (const article of articlesData) {
+        try {
           const tags = await getTagsForArticle(article.id)
-          tagsMap[article.id] = tags.map(t => t.tag.name)
+          tagsMap[article.id] = tags.map(t => t.tag?.name || '').filter(Boolean)
+        } catch (err) {
+          tagsMap[article.id] = []
         }
-        setArticleTags(tagsMap)
-      } finally {
-        setIsLoading(false)
       }
+      setArticleTags(tagsMap)
+    } catch (err) {
+      setError('Failed to load data')
+    } finally {
+      setIsLoading(false)
     }
-    loadData()
   }, [])
 
-  const filteredArticles = articles.filter(article => {
-    // Combine search and tag filters
-    const matchesSearch = article.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.content?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesTag = !selectedTag || 
-      (articleTags[article.id]?.includes(selectedTag))
-    
-    return matchesSearch && matchesTag
-  })
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
-  const handleDelete = async (id) => {
+  // Updated delete handler that accepts an article ID
+  const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this article?')) {
-      await deleteArticle(id)
-      setArticles(prev => prev.filter(article => article.id !== id))
+      deleteArticle(id)
+        .then(() => {
+          return deleteArticleTagsByArticleId(id)
+        })
+        .then(() => loadData()) // Re-fetch data after deletion
+        .catch(error => console.error('Error deleting article:', error))
     }
   }
 
   if (!user) return <Navigate to="/login" replace />
 
+  const filteredArticles = (articles || []).filter(article => {
+    const matchesSearch =
+      article.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      article.content?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesTag = !selectedTag || (articleTags[article.id]?.includes(selectedTag))
+    return matchesSearch && matchesTag
+  })
+
   return (
     <div className="container">
       <h1>Research Articles</h1>
       
-      {/* Filter Controls */}
+      {error && <div className="error-message">{error}</div>}
+      
       <div className="filters-container">
         <input
           type="text"
@@ -82,11 +98,13 @@ export const ArticleList = () => {
           onChange={(e) => setSelectedTag(e.target.value)}
         >
           <option value="">All Tags</option>
-          {allTags.map(tag => (
-            <option key={tag.id} value={tag.name}>
-              {tag.name}
-            </option>
-          ))}
+          {Array.isArray(allTags) &&
+            allTags.map(tag => (
+              <option key={tag.id} value={tag.name}>
+                {tag.name}
+              </option>
+            ))
+          }
         </select>
       </div>
 
@@ -104,8 +122,8 @@ export const ArticleList = () => {
             <p>{article.content.substring(0, 150)}...</p>
             
             <div className="tags-container">
-              {articleTags[article.id]?.map(tag => (
-                <span key={tag} className="tag">{tag}</span>
+              {(articleTags[article.id] || []).map((tag, index) => (
+                <span key={`${tag}-${index}`} className="tag">{tag}</span>
               ))}
             </div>
 
@@ -115,10 +133,7 @@ export const ArticleList = () => {
               </Link>
               {article.userId === user?.id && (
                 <>
-                  <Link
-                    to={`/articles/${article.id}/edit`}
-                    className="edit-button"
-                  >
+                  <Link to={`/articles/${article.id}/edit`} className="edit-button">
                     Edit
                   </Link>
                   <button 
