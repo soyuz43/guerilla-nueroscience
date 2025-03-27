@@ -11,8 +11,15 @@ export const createArticle = (article) => {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(article)
-  });
+    body: JSON.stringify({
+      title: article.title,
+      content: article.content,
+      date: article.date,
+      userId: article.userId,
+      author: article.author
+    })
+  })
+  .then(res => res.json());  // <-- Parse the JSON
 };
 
 export const getArticleById = (id) => {

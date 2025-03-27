@@ -16,43 +16,60 @@ export const ArticleForm = () => {
   const user = JSON.parse(localStorage.getItem('guerilla_user'))
 
   useEffect(() => {
-    getTags().then(tags => setExistingTags(tags))
+    getTags().then(tags => {
+      console.log("Fetched tags:", tags) // Debug
+      setExistingTags(tags)
+    })
   }, [])
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Create the article first
-    const newArticle = await createArticle({
-      title: article.title,
-      content: article.content,
-      date: new Date().toISOString(),
-      userId: user?.id,
-      author: user?.fullName || 'Anonymous'
-    })
-
-    // Process tags
-    const tagNames = article.tagInput
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0)
-
-    // Create tags and relationships
-    for (const tagName of tagNames) {
-      let tag = existingTags.find(t => t.name.toLowerCase() === tagName.toLowerCase())
-      
-      if (!tag) {
-        tag = await createTag({ name: tagName })
-        setExistingTags(prev => [...prev, tag])
-      }
-      
-      await createArticleTag({
-        articleId: newArticle.id,
-        tagId: tag.id
+    try {
+      // Create article
+      const newArticle = await createArticle({
+        title: article.title,
+        content: article.content,
+        date: new Date().toISOString(),
+        userId: user?.id,
+        author: user?.fullName || 'Anonymous'
       })
+  
+      // Process tags
+      const tagNames = article.tagInput
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0)
+  
+      // Case-sensitive deduplication
+      const uniqueTags = [...new Set(tagNames)]
+  
+      // Find/create tags with original casing
+      const tagPromises = uniqueTags.map(async tagName => {
+        const existingTag = existingTags.find(t => 
+          t.name.localeCompare(tagName, undefined, { sensitivity: 'accent' }) === 0
+        )
+        
+        return existingTag || createTag({ name: tagName })
+      })
+  
+      const resolvedTags = await Promise.all(tagPromises)
+  
+      // Create relationships
+      await Promise.all(
+        resolvedTags.map(tag => 
+          createArticleTag({
+            articleId: newArticle.id,
+            tagId: tag.id
+          })
+        )
+      )
+  
+      navigate('/articles')
+    } catch (error) {
+      console.error('Submission error:', error)
+      alert('Failed to submit article')
     }
-
-    navigate('/articles')
   }
 
   if (!user) return <Navigate to="/login" replace />
